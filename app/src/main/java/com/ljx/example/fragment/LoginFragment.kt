@@ -9,9 +9,16 @@ import androidx.fragment.app.Fragment
  * Time: 10:54
  */
 class LoginFragment : Fragment() {
-
+    var i: Interface? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         UserFragmentDirections.toLoginFragment()
+        i?.test()
+    }
+
+    class Interface {
+        fun test(){
+
+        }
     }
 }

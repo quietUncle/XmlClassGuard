@@ -1,11 +1,8 @@
 package com.xml.guard.tasks
 
 import com.bytedance.android.plugin.extensions.AabResGuardExtension
-import com.tencent.gradle.AndResGuardExtension
 import com.xml.guard.model.aabResGuard
-import com.xml.guard.model.andResGuard
 import com.xml.guard.utils.findLayoutDirs
-import com.xml.guard.utils.findXmlDirs
 import com.xml.guard.utils.isAndroidProject
 import groovy.util.Node
 import groovy.xml.XmlParser
@@ -41,9 +38,7 @@ open class FindConstraintReferencedIdsTask @Inject constructor(
         println("ids size is ${set.size} \n$set")
         val extension = project.extensions.getByName(extensionName)
         val whiteList =
-            if (andResGuard == extensionName && extension is AndResGuardExtension) {
-                extension.whiteList
-            } else if (aabResGuard == extensionName && extension is AabResGuardExtension) {
+            if (aabResGuard == extensionName && extension is AabResGuardExtension) {
                 extension.whiteList
             } else {
                 throw IllegalArgumentException("extensionName is $extensionName")

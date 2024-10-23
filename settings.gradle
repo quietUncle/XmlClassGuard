@@ -6,8 +6,9 @@ pluginManagement {
         if ("true" == useMavenLocal) {
             mavenLocal()
         }
+        jcenter()
         maven { url 'https://jitpack.io' }
-        maven { url 'https://raw.githubusercontent.com/martinloren/AabResGuard/mvn-repo' }
+//        maven { url 'https://raw.githubusercontent.com/martinloren/AabResGuard/mvn-repo' }
     }
 }
 dependencyResolutionManagement {

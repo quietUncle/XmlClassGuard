@@ -3,9 +3,9 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'androidx.navigation.safeargs'
 }
-apply from: 'aabresguard.gradle'
+//apply from: 'aabresguard.gradle'
 
-//apply from: 'xmlclassguard.gradle'
+apply from: 'xmlclassguard.gradle'
 
 android {
     namespace 'com.ljx.example'

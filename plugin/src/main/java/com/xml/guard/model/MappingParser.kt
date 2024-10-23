@@ -71,7 +71,7 @@ object MappingParser {
             }
         }
         mapping.classIndex = classIndex
-        mapping.packageNameIndex = packageNameIndex
+        mapping.packageNameIndex[0]=packageNameIndex
         return mapping
     }
 }

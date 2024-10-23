@@ -4,7 +4,10 @@ import java.io.File
 import java.util.regex.Pattern
 
 
-private val classPattern = Pattern.compile("class\\s+([_a-zA-Z-0-9]+)[\\s(]")
+//private val classPattern = Pattern.compile("class\\s+([_a-zA-Z-0-9]+)[\\s(]")
+private var classPattern =
+    Pattern.compile("\\b(class|enum class|data class|abstract class|sealed class|inner class|object|interface)\\s+([_\$a-zA-Z][_\$a-zA-Z0-9]*|[_\$a-zA-Z][_\$a-zA-Z0-9]*\\$[_\$a-zA-Z][_\$a-zA-Z0-9]*)[\\s(]")
+//private val classPattern = Pattern.compile("\\b(class|data class|abstract class|sealed class|inner class|object)\\s+([_$a-zA-Z][_$a-zA-Z0-9]*)[\\s(]")
 private val funPattern = Pattern.compile("(fun|fun\\s.*)\\s([._a-zA-Z0-9]+)\\s*\\(")
 private val fieldPattern = Pattern.compile("va[lr]\\s+([._a-zA-Z0-9]+)[\\s:]+")
 private val jvmFileNamePattern = Pattern.compile("@file\\s*:\\s*JvmName\\s*[(]\\s*\"(.+)\\s*\"[)]")
@@ -61,7 +64,7 @@ private fun String.findClassNames(): MutableList<String> {
     while (true) {
         val matcher = classPattern.matcher(this)
         if (matcher.find(index)) {
-            val classname = matcher.group(1)
+            val classname = matcher.group(2)
             classNames.add(classname)
             index = matcher.end()
         } else {

@@ -37,7 +37,9 @@ class Mapping {
     internal var classIndex = -1L
 
     //包名索引
-    internal var packageNameIndex = -1L
+    internal var packageNameIndex = mutableMapOf<Int, Long>()
+
+    internal var packageNameCount = 2
 
     //遍历文件夹下的所有直接子类，混淆文件名及移动目录
     fun obfuscateAllClass(project: Project, variantName: String): MutableMap<String, String> {
@@ -89,11 +91,21 @@ class Mapping {
                         (ktParser.topFunNames.isNotEmpty() || ktParser.topFieldNames.isNotEmpty())
                     ) {
                         classMapped["${rawClassPath}Kt"] = "${obfuscatePath}Kt"
+                        //kotlin特殊处理
+                        val newRawClassPath = capitalizeLastPackagePart(rawClassPath)
+                        if (newRawClassPath != rawClassPath) {
+                            classMapped["${newRawClassPath}Kt"] = "${obfuscatePath}Kt"
+                        }
                     }
                     ktParser.getTopClassOrFunOrFieldNames().forEach {
                         classMapped["$rawDir.$it"] = "$obfuscateDir.$it"
                     }
                 }
+            }
+        }
+        classMapping.forEach {
+            if (classMapped.containsKey(it.key)) {
+                classMapped[it.key] = it.value
             }
         }
         return classMapped
@@ -153,11 +165,27 @@ class Mapping {
 
     //生成混淆的包名
     private fun generateObfuscatePackageName(): String {
-        while (true) {
-            val obfuscatePackage = (++packageNameIndex).toLetterStr()
-            if (!obfuscatePackage.inPackageNameBlackList()) //过滤黑名单
-                return obfuscatePackage
+        var packageName = ""
+        for (i in 1..packageNameCount) {
+            var creating = true
+            var obfuscatePackage = ""
+            var index = packageNameIndex.getOrDefault(i, -1L)
+            if (i == 1 && index < 26) {
+                index = 26
+            }
+            while (creating) {
+                obfuscatePackage = (++index).toLetterStr()
+                if (!obfuscatePackage.inPackageNameBlackList()) { //过滤黑名单
+                    creating = false
+                }
+            }
+            packageNameIndex[i] = index
+            packageName += obfuscatePackage
+            if (i != packageNameCount) {
+                packageName += "."
+            }
         }
+        return packageName
     }
 
     //生成混淆的类名
@@ -171,5 +199,16 @@ class Mapping {
 
     private fun isInnerClass(classPath: String): Boolean {
         return classPath.contains("[a-zA-Z0-9_]+\\$[a-zA-Z0-9_]+".toRegex())
+    }
+
+    private fun capitalizeLastPackagePart(packageName: String): String {
+        // 使用 '.' 分割包名
+        val parts = packageName.split(".")
+
+        // 获取包名的最后一部分并将首字母大写
+        val lastPartCapitalized = parts.last().replaceFirstChar { it.uppercase() }
+
+        // 用大写后的最后一部分重新组装包名
+        return parts.dropLast(1).joinToString(".") + "." + lastPartCapitalized
     }
 }

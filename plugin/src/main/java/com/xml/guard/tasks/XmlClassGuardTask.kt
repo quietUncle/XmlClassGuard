@@ -19,6 +19,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.util.regex.Pattern
 import javax.inject.Inject
 
 /**
@@ -47,11 +48,13 @@ open class XmlClassGuardTask @Inject constructor(
         androidProjects.forEach { handleResDir(it) }
         //2、仅修改文件名及文件路径，返回本次修改的文件
         val classMapping = mapping.obfuscateAllClass(project, variantName)
+
         if (hasNavigationPlugin && fragmentDirectionList.isNotEmpty()) {
             fragmentDirectionList.forEach {
                 classMapping["${it}Directions"] = "${classMapping[it]}Directions"
             }
         }
+
         //3、替换Java/kotlin文件里引用到的类
         if (classMapping.isNotEmpty()) {
             androidProjects.forEach { replaceJavaText(it, classMapping) }
@@ -145,11 +148,10 @@ open class XmlClassGuardTask @Inject constructor(
         val obfuscateIndex = obfuscatePath.lastIndexOf(".")
         val obfuscatePackage = obfuscatePath.substring(0, obfuscateIndex)
         val obfuscateName = obfuscatePath.substring(obfuscateIndex + 1)
-
         var replaceText = rawText
         when {
             rawFile.absolutePath.removeSuffix()
-                .endsWith(obfuscatePath.replace(".", File.separator)) -> {
+                .endsWith(File.separator + obfuscatePath.replace(".", File.separator)) -> {
                 //对于自己，替换package语句及类名即可
                 replaceText = replaceText
                     .replaceWords("package $rawPackage", "package $obfuscatePackage")
@@ -157,10 +159,23 @@ open class XmlClassGuardTask @Inject constructor(
                     .replaceWords(rawName, obfuscateName)
             }
 
-            rawFile.parent.endsWith(obfuscatePackage.replace(".", File.separator)) -> {
+            rawFile.parent.endsWith(
+                File.separator + obfuscatePackage.replace(
+                    ".",
+                    File.separator
+                )
+            ) -> {
                 //同一包下的类，原则上替换类名即可，但考虑到会依赖同包下类的内部类，所以也需要替换包名+类名
+                var replaceName = true
+                if (replaceText.hasImportFor(rawName)) {
+                    if( !replaceText.contains(rawPath)){
+                        replaceName = false
+                    }
+                }
                 replaceText = replaceText.replaceWords(rawPath, obfuscatePath)  //替换{包名+类名}
-                    .replaceWords(rawName, obfuscateName)
+                if (replaceName) {
+                    replaceText = replaceText.replaceWords(rawName, obfuscateName)
+                }
             }
 
             else -> {
@@ -174,5 +189,11 @@ open class XmlClassGuardTask @Inject constructor(
             }
         }
         return replaceText
+    }
+
+    private fun String.hasImportFor(className: String): Boolean {
+        val importPattern = Pattern.compile("import\\s+([a-zA-Z_][\\w.]*\\.${className})(?:\\s|;|$)")
+        val matcher = importPattern.matcher(this)
+        return matcher.find()
     }
 }
